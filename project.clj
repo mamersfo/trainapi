@@ -11,6 +11,12 @@
                  [com.mchange/c3p0 "0.9.5"]
                  [com.stuartsierra/component "0.2.2"]
                  [com.taoensso/timbre "3.3.1"]
-                 [org.clojure/tools.cli "0.3.1"]]
+                 [org.clojure/tools.cli "0.3.1"]
+                 [org.immutant/immutant "2.0.0-beta2"]]
+  :repositories [["Immutant incremental builds"
+                  "http://downloads.immutant.org/incremental/"]]
+  :plugins [[lein-immutant "2.0.0-beta1"]]
   :main trainapi.main
-  :aot [trainapi.main])
+  :uberjar-name "trainapi-standalone.jar"
+  :profiles {:uberjar {:aot [trainapi.main]}}
+  :min-lein-version "2.4.0")

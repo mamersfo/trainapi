@@ -35,7 +35,7 @@
   (component/system-map
    :db (db/make-database conf)
    :server (component/using
-            (server/make-server conf)
+            (server/make-immutant conf)
             {:db :db})))
 
 (defn -main [& args]

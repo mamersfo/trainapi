@@ -7,7 +7,8 @@
             [ring.middleware.json :as json]
             [com.stuartsierra.component :as component]
             [ring.adapter.jetty :refer [run-jetty]]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log]
+            [immutant.web :as web]))
 
 (defroutes routes
   (ANY "/hello"
@@ -86,20 +87,35 @@
       (wrap-error-handling)
       (json/wrap-json-response)))
 
-(defrecord Server [jetty port db]
+(defrecord Jetty [jetty port db]
   component/Lifecycle
   (start [this]
-    (println ";; Starting server")
+    (println ";; Starting Jetty")
     (assoc this :jetty
            (run-jetty (make-handler db) {:port port :join? false})))
   (stop [this]
-    (println ";; Stopping server")
+    (println ";; Stopping Jetty")
     (if-let [jetty (:jetty this)]
       (do
         (.stop jetty)
         (dissoc this :jetty nil)))
     this))
 
-(defn make-server
+(defn make-jetty
   [conf]
-  (map->Server conf))
+  (map->Jetty conf))
+
+(defrecord Immutant [host port path db]
+  component/Lifecycle
+  (start [this]
+    (println ";; Starting Immutant")
+    (web/run (make-handler db) {:host host :port port :path path})
+    this)
+  (stop [this]
+    (println ";; Stopping Immutant")
+    (web/stop {:host host :port port :path path})
+    this))
+
+(defn make-immutant
+  [conf]
+  (map->Immutant conf))
