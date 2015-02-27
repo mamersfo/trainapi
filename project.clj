@@ -6,6 +6,7 @@
                  [ring/ring-core "1.3.2"]
                  [ring/ring-json "0.3.1"]
                  [ring/ring-jetty-adapter "1.3.2"]
+                 [org.clojure/java.jdbc "0.3.6"]
                  [org.postgresql/postgresql "9.2-1004-jdbc4"]
                  [com.stuartsierra/component "0.2.2"]
                  [com.taoensso/timbre "3.4.0"]
@@ -24,4 +25,10 @@
             [lein-ring "0.9.1"]]
 
   :ring {:handler trainapi.handler/app
-         :nrepl {:start? true :port 4555}})
+         :nrepl {:start? true :port 4555}}
+
+  :main trainapi.core
+
+  :uberjar-name "trainapi.jar"
+
+  :profiles {:uberjar {:aot [trainapi.core]}})

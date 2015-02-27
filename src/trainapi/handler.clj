@@ -10,6 +10,7 @@
             [ring.middleware.session :refer [wrap-session]]
             [ring.middleware.params :refer [wrap-params]]
             [ring.middleware.json :as json]
+            [immutant.web.middleware :as immutant]
             [taoensso.timbre :as log]))
 
 (defn authorized?
@@ -109,7 +110,6 @@
       (handler request)
       (catch Exception e
         (log/error (class e) "-" (.getMessage e))
-        ;; (.printStackTrace e)
         (if-let [msg (server-error-message e)]
           {:status 400
            :body {:message msg}
@@ -124,4 +124,4 @@
       (json/wrap-json-body {:keywords? true})
       (wrap-error-handling)
       (json/wrap-json-response)
-      (wrap-session)))
+      (immutant/wrap-session {:timeout 10})))
