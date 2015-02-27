@@ -1,15 +1,16 @@
 (ns trainapi.db
-  (:require [clj-dbcp.core :as dbcp]))
+  (:require [clj-dbcp.core :as dbcp]
+            [environ.core :refer [env]]))
 
 (defn make-subname
   [host port db]
   (str "//" host ":" port "/" db))
 
-(def host (or (System/getenv "OPENSHIFT_POSTGRESQL_DB_HOST")     "localhost"))
-(def port (or (System/getenv "OPENSHIFT_POSTGRESQL_DB_PORT")     "5432"))
-(def db   (or (System/getenv "OPENSHIFT_APP_NAME")               "tomcat"))
-(def user (or (System/getenv "OPENSHIFT_POSTGRESQL_DB_USERNAME") "postgres"))
-(def pass (or (System/getenv "OPENSHIFT_POSTGRESQL_DB_PASSWORD") "postgres"))
+(def host (or (env :openshift-postgresql-db-host)     "localhost"))
+(def port (or (env :openshift-postgres-db-port)       "5432"))
+(def db   (or (env :openshift-app-name)               "tomcat"))
+(def user (or (env :openshift-postgresql-db-host)     "postgres"))
+(def pass (or (env :openshift-postgresql-db-password) "postgres"))
 
 (def db-spec {:subprotocol "postgresql"
               :subname (make-subname host port db)

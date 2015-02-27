@@ -16,7 +16,8 @@
                  [lib-noir "0.9.5"]
                  [prismatic/schema "0.3.7"]
                  [clj-dbcp "0.8.1"]
-                 [org.slf4j/slf4j-log4j12 "1.7.10"]]
+                 [org.slf4j/slf4j-log4j12 "1.7.10"]
+                 [environ "1.0.0"]]
 
   :repositories [["Immutant incremental builds"
                   "http://downloads.immutant.org/incremental/"]]
