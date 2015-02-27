@@ -1,30 +1,42 @@
 (ns trainapi.trainings
   (:refer-clojure :exclude [read])
-  (:require [yesql.core :refer [defqueries]]
-            [clojure.java.jdbc :as jdbc]
+  (:require [clojure.java.jdbc :as jdbc]
+            [schema.core :as s]
             [taoensso.timbre :as log]))
 
-(defqueries "trainings.sql")
+(def Training
+  {(s/required-key :id) s/Int
+   (s/required-key :exercises) [s/Str]})
 
 (defn create!
-  [db name]
-  (let [id (str (java.util.UUID/randomUUID))
-        created (System/currentTimeMillis)]
-    (db-insert-training! (:connection db) id name created)
-    id))
+  [db user-id name]
+  (s/validate s/Int user-id)
+  (s/validate s/Str name)
+  (let [created (System/currentTimeMillis)]
+    (first
+     (jdbc/insert! db :trainings
+                   {:user_id user-id :name name :created created}))))
 
 (defn read
-  ([db]
-   (db-select-all-trainings (:connection db)))
-  ([db id]
-   (jdbc/with-db-transaction [conn (:connection db)]
-     (if-let [training (first (db-select-training conn id))]
-       (let [exercises (db-select-training-exercises conn id)]
-         (assoc training :exercises (map :exercise exercises)))))))
+  [db id]
+  (s/validate s/Int id)
+  (jdbc/with-db-transaction [conn db]
+    (if-let [training
+             (first (jdbc/query db ["select * from trainings where id = ?" id]))]
+      (let [exercises
+            (jdbc/query db ["select exercise from trainingexercises
+                              where training = ? order by position asc" id])]
+        (assoc training :exercises (map :exercise exercises))))))
+
+(defn read-for-user
+  [db user-id]
+  (s/validate s/Int user-id)
+  (jdbc/query db ["select * from trainings where user_id = ?" user-id]))
 
 (defn update!
   [db training]
-  (jdbc/with-db-transaction [conn (:connection db)]
+  (s/validate Training training)
+  (jdbc/with-db-transaction [conn db]
     (jdbc/delete! conn :trainingexercises ["training = ?" (:id training)])
     (let [exercises (map (fn [exercise position]
                          {:training (:id training)
@@ -36,4 +48,5 @@
 
 (defn delete!
   [db id]
-  (db-delete-training! (:connection db) id))
+  (s/validate s/Int id)
+  (jdbc/delete! db :trainings ["id = ?" id]))

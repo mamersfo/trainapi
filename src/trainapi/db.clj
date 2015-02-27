@@ -1,26 +1,30 @@
 (ns trainapi.db
-  (:require [com.stuartsierra.component :as component])
-  (:import com.mchange.v2.c3p0.ComboPooledDataSource))
+  (:require [clj-dbcp.core :as dbcp]))
 
-(defrecord Database [classname subprotocol subname user password connection]
-  component/Lifecycle
-  (start [this]
-    (println ";; Starting database")
-    (let [url (str "jdbc:" subprotocol ":" subname)
-          ds (doto (ComboPooledDataSource.)
-               (.setDriverClass classname)
-               (.setJdbcUrl url)
-               (.setUser user)
-               (.setPassword password)
-               (.setMaxIdleTimeExcessConnections (* 30 60))
-               (.setMaxIdleTime (* 3 60 60)))]
-      (assoc this :connection {:datasource ds})))
-  (stop [this]
-    (println ";; Stopping database")
-    (if-let [conn (:connection this)]
-      (.close (:datasource conn)))
-    this))
+(defn make-subname
+  [host port db]
+  (str "//" host ":" port "/" db))
 
-(defn make-database
-  [conf]
-  (map->Database conf))
+(def host (or (System/getenv "OPENSHIFT_POSTGRESQL_DB_HOST")     "localhost"))
+(def port (or (System/getenv "OPENSHIFT_POSTGRESQL_DB_PORT")     "5432"))
+(def db   (or (System/getenv "OPENSHIFT_APP_NAME")               "tomcat"))
+(def user (or (System/getenv "OPENSHIFT_POSTGRESQL_DB_USERNAME") "postgres"))
+(def pass (or (System/getenv "OPENSHIFT_POSTGRESQL_DB_PASSWORD") "postgres"))
+
+(def db-spec {:subprotocol "postgresql"
+              :subname (make-subname host port db)
+              :user user
+              :password pass})
+
+(def db {:datasource (dbcp/make-datasource {:adapter :postgresql
+                                            :host host
+                                            :database db
+                                            :username user
+                                            :password pass})})
+
+(defn server-error-message
+  [e]
+  (if (instance? org.postgresql.util.PSQLException e)
+    (if-let [msg (.getServerErrorMessage e)]
+      (.getDetail msg)
+      (.getMessage e))))
